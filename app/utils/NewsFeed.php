@@ -3,6 +3,8 @@
 require_once __DIR__ . '/../../vendor/autoload.php';
 
 use Model\NewsModel;
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
 
 class NewsFeed
 {
@@ -34,6 +36,12 @@ class NewsFeed
         $model = new NewsModel();
         $items = $this->feed->get_items();
 
+        if (!empty($items)) {
+            $this->Log('info_log');
+        } else {
+            $this->Log('error_log');
+        }
+
         foreach ($items as $item) {
             $model->insert(array(
                 $item->get_title(),
@@ -45,5 +53,20 @@ class NewsFeed
         }
 
         return $this;
+    }
+
+    private function Log($name)
+    {
+        $logger = new Logger($name);
+        switch ($name) {
+            case 'info_log':
+                $logger->pushHandler(new StreamHandler('log/success_task.log', Logger::INFO));
+                $logger->info(date("Y-m-d H:i:s") . " - task was executed");
+                break;
+            case 'error_log':
+                $logger->pushHandler(new StreamHandler('log/error_task.log', Logger::ERROR));
+                $logger->error(date("Y-m-d H:i:s") . " - something wrong");
+                break;
+        }
     }
 }
